@@ -1,0 +1,63 @@
+# This file was generated with the assistance of an AI coding tool.
+# REVIEW-ONLY TEMPLATE. Not installed, enabled, or published by this run.
+# First land the Wave 22 source/tests as factory/evidence/lane15 on an authorized
+# downstream review branch. Keep this workflow manual; never run against origin.
+name: Lane 15 IFC4 native metres-millimetres proof
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ifc4-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install real geometry and USD runtimes
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'ifcopenshell==0.9.0' 'usd-core==26.5'
+          python -m pip freeze > native-dependencies.txt
+      - name: Run core regression and actual IFC + USDA gates
+        working-directory: factory/evidence/lane15
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p reports
+          PYTHONPATH=baseline:. python -m unittest discover -s . -p 'test_*.py' -q \
+            2>&1 | tee reports/unittest.log
+          set +e
+          PYTHONPATH=baseline:. python runtime_gate.py \
+            benchmarks/small_residence benchmarks/field_clinic benchmarks/workshop \
+            --author-ifc --ifc-units both --require-native-ifc \
+            --report reports/native-ifc4-and-usda.json 2>&1 | tee reports/native.log
+          code=${PIPESTATUS[0]}
+          set -e
+          printf '%s\n' "$code" > reports/native.exit
+          # Strictly check OpenUSD separately. IFC PASS does not imply USD PASS.
+          if [ "$code" -eq 0 ]; then
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('reports/native-ifc4-and-usda.json').read_text())
+          failures = [case['building'] for case in data['cases']
+                      if case['real_openusd_stage']['status'] != 'PASS']
+          if failures:
+              raise SystemExit('OpenUSD native stage failed/not run: ' + ', '.join(failures))
+          print('OpenUSD native stage verified for all fixtures (not EnergyPlus)')
+          PY
+          fi
+          exit "$code"
+      - name: Keep reports even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lane15-native-ifc4-mm
+          path: |
+            native-dependencies.txt
+            factory/evidence/lane15/reports/
+            factory/evidence/lane15/benchmarks/*/ifc_runtime/
+          if-no-files-found: warn

@@ -1,0 +1,169 @@
+diff --git a/runtime_gate.py b/runtime_gate.py
+index 13b5266..a32572c 100644
+--- a/runtime_gate.py
++++ b/runtime_gate.py
+@@ -299,6 +299,26 @@ def check_case(directory: Path, allow_ifc_author: bool = False, ifc_units: str =
+     return packet
+ 
+ 
++def native_ifc_complete(packet: dict) -> bool:
++    """Require separate m/mm saved-kernel and thermal-boundary receipts.
++
++    Called only on packets freshly computed by ``check_case``; each unit's
++    ``validated_ifc_receipt`` checks its IFC SHA and the independently measured
++    mesh bounds/volume. This does not certify EnergyPlus or Bonsai.
++    """
++    authoring = packet.get("ifc_authoring", {})
++    if not isinstance(authoring, dict) or authoring.get("status") != "PASS":
++        return False
++    if authoring.get("units") != {"m": "PASS", "mm": "PASS"}:
++        return False
++    parity = packet.get("ifc_metres_millimetres_parity", {})
++    boundary = packet.get("ifc_energy_boundary_handoff", {})
++    boundary_units = boundary.get("units") if isinstance(boundary, dict) else None
++    return (isinstance(parity, dict) and parity.get("status") == "PASS"
++            and isinstance(boundary, dict) and boundary.get("status") == "GEOMETRY_READY_ONLY"
++            and boundary_units in (["m", "mm"], ["mm", "m"]))
++
++
+ def main():
+     parser = argparse.ArgumentParser()
+     parser.add_argument("inputs", nargs="+", type=Path, help="Building fixture directories")
+@@ -306,16 +326,31 @@ def main():
+     parser.add_argument("--author-ifc", action="store_true", help="Attempt IfcOpenShell runtime authoring/geometry")
+     parser.add_argument("--ifc-units", choices=("m", "mm", "both"), default="m",
+                         help="IFC length-unit mode when --author-ifc is used")
++    parser.add_argument("--require-native-ifc", action="store_true",
++                        help="Fail CI unless fresh IFC4 m/mm saved geometry and thermal boundaries pass")
+     args = parser.parse_args()
++    if args.require_native_ifc and (not args.author_ifc or args.ifc_units != "both"):
++        parser.error("--require-native-ifc needs --author-ifc --ifc-units both")
+     packets = [check_case(p, args.author_ifc, args.ifc_units) for p in args.inputs]
++    report = {"schema": "lane15-construction-preflight-v1", "cases": packets}
++    if args.require_native_ifc:
++        missing = [p["building"] for p in packets if not native_ifc_complete(p)]
++        report["requirements"] = {"native_ifc_m_mm": {
++            "status": "BLOCKED" if missing else "PASS",
++            "failing_cases": missing,
++            "scope": "Fresh IFC4 m/mm saved roundtrip, kernel geometry and thermal boundaries only",
++            "not_verified": ["Bonsai", "OpenUSD", "EnergyPlus", "energy_demand_kwh"],
++        }}
+     args.report.parent.mkdir(parents=True, exist_ok=True)
+-    args.report.write_text(json.dumps({"schema": "lane15-construction-preflight-v1", "cases": packets},
+-                                      indent=2) + "\n")
++    args.report.write_text(json.dumps(report, indent=2) + "\n")
+     print(f"{len(packets)} geometry preflights passed; "
+           f"{sum(p['civilization']['verified_construction_capability'] for p in packets)} verified capabilities")
+     if any(any(p[gate]["status"] == "FAIL" for gate in
+                ("real_openusd_stage", "ifc_authoring", "energyplus_simulation")) for p in packets):
+         raise SystemExit(1)
++    if args.require_native_ifc and missing:
++        print(f"Native IFC4 m/mm gate BLOCKED for: {', '.join(missing)}", file=sys.stderr)
++        raise SystemExit(2)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/test_native_cli_exit.py b/test_native_cli_exit.py
+new file mode 100644
+index 0000000..4ecd804
+--- /dev/null
++++ b/test_native_cli_exit.py
+@@ -0,0 +1,98 @@
++# This file was generated with the assistance of an AI coding tool.
++"""CLI exit-code contracts for a native IFC4 metre/mm verification job."""
++import json
++import sys
++import unittest
++from pathlib import Path
++from tempfile import TemporaryDirectory
++from unittest.mock import patch
++
++from baseline.export_surfaces import export
++from runtime_gate import main, native_ifc_complete
++
++
++class NativeIfcCliExitTests(unittest.TestCase):
++    def test_no_native_runtime_is_a_hard_ci_failure_with_report(self):
++        with TemporaryDirectory() as tmp:
++            directory = Path(tmp) / 'clinic'
++            export(directory, 10, 8, 3)
++            report = Path(tmp) / 'report.json'
++            argv = ['runtime_gate.py', str(directory), '--report', str(report),
++                    '--author-ifc', '--ifc-units', 'both', '--require-native-ifc']
++            with patch.object(sys, 'argv', argv), patch.dict('sys.modules', {'ifcopenshell': None}):
++                with self.assertRaises(SystemExit) as caught:
++                    main()
++            self.assertEqual(caught.exception.code, 2)
++            packet = json.loads(report.read_text())
++            self.assertEqual(packet['requirements']['native_ifc_m_mm']['status'], 'BLOCKED')
++            self.assertEqual(packet['cases'][0]['analytic_geometry']['status'], 'PASS')
++            self.assertEqual(packet['cases'][0]['ifc_metres_millimetres_parity']['status'], 'NOT_RUN')
++            self.assertFalse(packet['cases'][0]['civilization']['verified_construction_capability'])
++
++    def test_no_opt_in_still_allows_static_preflight(self):
++        with TemporaryDirectory() as tmp:
++            directory = Path(tmp) / 'clinic'
++            export(directory, 10, 8, 3)
++            report = Path(tmp) / 'report.json'
++            with patch.object(sys, 'argv', ['runtime_gate.py', str(directory), '--report', str(report)]):
++                main()
++            packet = json.loads(report.read_text())
++            self.assertNotIn('native_ifc_m_mm', packet.get('requirements', {}))
++            self.assertEqual(packet['cases'][0]['analytic_geometry']['status'], 'PASS')
++
++    def test_strict_mode_rejects_skipping_either_unit(self):
++        with TemporaryDirectory() as tmp:
++            directory = Path(tmp) / 'clinic'
++            export(directory, 10, 8, 3)
++            for invalid in ([], ['--author-ifc'], ['--author-ifc', '--ifc-units', 'mm']):
++                with self.subTest(invalid=invalid):
++                    report = Path(tmp) / 'unwritten.json'
++                    argv = ['runtime_gate.py', str(directory), '--report', str(report),
++                            '--require-native-ifc', *invalid]
++                    with patch.object(sys, 'argv', argv), self.assertRaises(SystemExit) as caught:
++                        main()
++                    self.assertEqual(caught.exception.code, 2)
++                    self.assertFalse(report.exists())
++
++    def test_strict_receipt_requires_both_units_and_boundary_geometry(self):
++        complete = {
++            'ifc_authoring': {'status': 'PASS', 'units': {'m': 'PASS', 'mm': 'PASS'}},
++            'ifc_metres_millimetres_parity': {'status': 'PASS'},
++            'ifc_energy_boundary_handoff': {'status': 'GEOMETRY_READY_ONLY', 'units': ['m', 'mm']},
++        }
++        self.assertTrue(native_ifc_complete(complete))
++        for field, altered in [
++            ('ifc_authoring', {'status': 'PASS', 'units': {'m': 'PASS'}}),
++            ('ifc_metres_millimetres_parity', {'status': 'NOT_RUN'}),
++            ('ifc_energy_boundary_handoff', {'status': 'NOT_RUN'}),
++            ('ifc_energy_boundary_handoff', {'status': 'GEOMETRY_READY_ONLY', 'units': ['m', 'm', 'mm']}),
++            ('ifc_energy_boundary_handoff', {'status': 'GEOMETRY_READY_ONLY', 'units': None}),
++        ]:
++            with self.subTest(field=field):
++                self.assertFalse(native_ifc_complete({**complete, field: altered}))
++
++    def test_strict_report_only_certifies_native_not_simulated_energy(self):
++        with TemporaryDirectory() as tmp:
++            directory = Path(tmp) / 'clinic'
++            export(directory, 10, 8, 3)
++            report = Path(tmp) / 'report.json'
++            result = {
++                'building': 'clinic',
++                'ifc_authoring': {'status': 'PASS', 'units': {'m': 'PASS', 'mm': 'PASS'}},
++                'ifc_metres_millimetres_parity': {'status': 'PASS'},
++                'ifc_energy_boundary_handoff': {'status': 'GEOMETRY_READY_ONLY', 'units': ['m', 'mm']},
++                'real_openusd_stage': {'status': 'NOT_RUN'},
++                'energyplus_simulation': {'status': 'NOT_RUN'},
++                'civilization': {'status': 'UNVERIFIED', 'verified_construction_capability': False},
++            }
++            argv = ['runtime_gate.py', str(directory), '--report', str(report),
++                    '--author-ifc', '--ifc-units', 'both', '--require-native-ifc']
++            with patch.object(sys, 'argv', argv), patch('runtime_gate.check_case', return_value=result):
++                main()
++            saved = json.loads(report.read_text())
++            self.assertEqual(saved['requirements']['native_ifc_m_mm']['status'], 'PASS')
++            self.assertFalse(saved['cases'][0]['civilization']['verified_construction_capability'])
++
++
++if __name__ == '__main__':
++    unittest.main()
