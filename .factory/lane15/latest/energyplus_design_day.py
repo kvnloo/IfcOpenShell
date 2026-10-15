@@ -17,6 +17,8 @@ import shutil
 import subprocess
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent / "baseline"))
+
 from test_export_invariants import Building, parse_idf, verify_shell
 
 VERSION = "26.2"

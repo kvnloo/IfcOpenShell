@@ -1,6 +1,7 @@
 # This file was generated with the assistance of an AI coding tool.
 """EnergyPlus 26.2 surface-schema/design-day candidate tests (no engine claims)."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -71,6 +72,25 @@ class EnergyPlusDesignDayTests(unittest.TestCase):
             receipt = run_engine(Path(td) / "unused.idf", Path(td) / "engine", str(binary))
             self.assertEqual(receipt["status"], "BLOCKED")
             self.assertIn("26.1.0", receipt["reported_engine_version"])
+
+    def test_cli_static_export_from_unrelated_cwd(self):
+        # A fresh CLI process must find the bundled baseline package itself,
+        # without relying on another test to modify sys.path first.
+        with TemporaryDirectory() as td:
+            out = Path(td) / "out"
+            env = dict(os.environ, PYTHONPATH="")
+            proc = subprocess.run(
+                [sys.executable, str(Path(__file__).parent / "energyplus_design_day.py"),
+                 str(ROOT / "field_clinic"), "--out", str(out)],
+                cwd=td, env=env, capture_output=True, text=True,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            receipt = json.loads((out / "design_day_report.json").read_text())
+            self.assertEqual(receipt["status"], "STATIC_ONLY")
+            self.assertEqual(receipt["native_engine"], "NOT_RUN")
+            self.assertEqual(receipt["surfaces"], 6)
+            self.assertIsNone(receipt["energy_demand_kwh"])
+            self.assertTrue((out / "design_day_26_2.idf").is_file())
 
     def test_cli_strict_native_exits_two_and_writes_receipt(self):
         with TemporaryDirectory() as td:

@@ -1,0 +1,27 @@
+{
+  "kind": "result",
+  "wave": 25,
+  "project": "ifcopenshell",
+  "status": "LIMITED",
+  "head_before": "0a317f3d7cf95aea850caf51f86335436387ac5b",
+  "change": "Repair standalone EnergyPlus 26.2 CLI baseline imports",
+  "reproducer": "Direct python script before fix -> ModuleNotFoundError: test_export_invariants",
+  "tests": {
+    "core_total": 126,
+    "core_skipped": 1,
+    "core_failures": 0,
+    "independent_baseline_passed": 19,
+    "synthetic_fixtures": 3,
+    "strict_native_exit": 2
+  },
+  "native": {
+    "ifcopenshell": "NOT_RUN",
+    "openusd": "NOT_RUN",
+    "bonsai": "NOT_RUN",
+    "energyplus": "NOT_RUN"
+  },
+  "lease_acquired": false,
+  "origin_write": false,
+  "default_merge": false,
+  "next": "Run pinned native IFC, OpenUSD, EnergyPlus gates on suitable runner."
+}
