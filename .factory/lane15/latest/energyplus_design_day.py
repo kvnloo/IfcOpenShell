@@ -172,11 +172,19 @@ def run_engine(idf: Path, out: Path, executable: str = "energyplus") -> dict:
     except (OSError, subprocess.TimeoutExpired) as e:
         return {"status": "FAIL", "reason": str(e), "engine_output_directory": str(run_dir)}
     err = run_dir / "eplusout.err"
+    end = run_dir / "eplusout.end"
     log = err.read_text(errors="replace") if err.exists() else ""
+    end_summary = end.read_text(errors="replace").strip() if end.exists() else ""
     severe = len(re.findall(r"(?im)^\s*\*\*\s*(?:Severe|Fatal)\s*\*\*", log))
-    result = {"status": "PASS" if proc.returncode == 0 and err.exists() and severe == 0 else "FAIL",
+    # EnergyPlus 26.2's .end file is the documented completion receipt.
+    # A zero process exit and non-severe .err file alone do not prove a run completed.
+    completed = bool(re.match(r"^EnergyPlus Completed Successfully--\s+\d+\s+Warnings?;\s+0\s+Severe Errors\b",
+                              end_summary))
+    result = {"status": "PASS" if proc.returncode == 0 and err.exists() and completed and severe == 0 else "FAIL",
               "engine_version": declared[-250:], "engine_exit_code": proc.returncode,
-              "engine_error_log_exists": err.exists(),
+              "engine_error_log_exists": err.exists(), "engine_end_file_exists": end.exists(),
+              "engine_end_summary": end_summary[:400], "engine_end_completed": completed,
+              "engine_end_file_sha256": hashlib.sha256(end.read_bytes()).hexdigest() if end.exists() else None,
               "engine_output_directory": str(run_dir),
               "severe_or_fatal_lines": severe, "stdout_tail": proc.stdout[-500:],
               "stderr_tail": proc.stderr[-500:], "engine_error_log_sha256":

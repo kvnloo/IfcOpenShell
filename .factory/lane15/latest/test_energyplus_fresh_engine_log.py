@@ -23,6 +23,7 @@ if {behavior!r} == 'severe':
     (out / 'eplusout.err').write_text('** Severe ** Fatal input problem\\n')
 else:
     (out / 'eplusout.err').write_text('EnergyPlus Completed Successfully--stub-only\\n')
+    (out / 'eplusout.end').write_text('EnergyPlus Completed Successfully-- 0 Warning; 0 Severe Errors\\n')
 """, encoding="utf-8")
     path.chmod(0o755)
     return path
