@@ -16,6 +16,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "baseline"))
 
@@ -162,17 +163,21 @@ def run_engine(idf: Path, out: Path, executable: str = "energyplus") -> dict:
         return {"status": "BLOCKED", "reason": "Expected native EnergyPlus 26.2; refusing wrong IDD version",
                 "reported_engine_version": declared[-250:]}
     out.mkdir(parents=True, exist_ok=True)
+    # Isolate each engine invocation from all prior output (no stale-log PASS).
+    # Keep the unique directory and its error log for reproducible evidence.
+    run_dir = Path(tempfile.mkdtemp(prefix="run-", dir=out))
     try:
-        proc = subprocess.run([binary, "--output-directory", str(out), str(idf.resolve())],
+        proc = subprocess.run([binary, "--output-directory", str(run_dir), str(idf.resolve())],
                               capture_output=True, text=True, timeout=240, check=False)
     except (OSError, subprocess.TimeoutExpired) as e:
-        return {"status": "FAIL", "reason": str(e)}
-    err = out / "eplusout.err"
+        return {"status": "FAIL", "reason": str(e), "engine_output_directory": str(run_dir)}
+    err = run_dir / "eplusout.err"
     log = err.read_text(errors="replace") if err.exists() else ""
     severe = len(re.findall(r"(?im)^\s*\*\*\s*(?:Severe|Fatal)\s*\*\*", log))
     result = {"status": "PASS" if proc.returncode == 0 and err.exists() and severe == 0 else "FAIL",
               "engine_version": declared[-250:], "engine_exit_code": proc.returncode,
               "engine_error_log_exists": err.exists(),
+              "engine_output_directory": str(run_dir),
               "severe_or_fatal_lines": severe, "stdout_tail": proc.stdout[-500:],
               "stderr_tail": proc.stderr[-500:], "engine_error_log_sha256":
               hashlib.sha256(err.read_bytes()).hexdigest() if err.exists() else None,
