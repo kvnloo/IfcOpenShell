@@ -1,0 +1,171 @@
+! AI-assisted Lane 15 synthetic validation scenario (NOT a real building).
+! Design days only. No EPW/weather-file period; no HVAC, occupants or energy demand.
+! Source for compatible object field layout: EnergyPlus 26.2.0 1ZoneUncontrolled.idf.
+Version,26.2;
+Timestep,4;
+Building,Lane15 Synthetic One Zone,0,Suburbs,0.04,0.004,MinimalShadowing,30,6;
+SimulationControl,No,No,No,Yes,No,No,1;
+Site:Location,Reference Denver Site,39.74,-105.18,-7,1829;
+SizingPeriod:DesignDay,Reference Winter,12,21,WinterDesignDay,-15.5,0,,,Wetbulb,-15.5,,,,,81198,3,340,No,No,No,ASHRAEClearSky,,,,,0;
+SizingPeriod:DesignDay,Reference Summer,7,21,SummerDesignDay,32,15.2,,,Wetbulb,15.5,,,,,81198,4.9,0,No,No,No,ASHRAEClearSky,,,,,1;
+Material:NoMass,ReferenceWallLayer,Rough,2.290965,0.9,0.75,0.75;
+Material:NoMass,ReferenceRoofLayer,Rough,5.456,0.9,0.75,0.75;
+Material,ReferenceSlabLayer,MediumRough,0.1014984,1.729577,2242.585,836.8,0.9,0.65,0.65;
+Construction,WallConstruction,ReferenceWallLayer;
+Construction,RoofConstruction,ReferenceRoofLayer;
+Construction,FloorConstruction,ReferenceSlabLayer;
+! Synthetic soil boundary assumed constant for the two design days.
+Site:GroundTemperature:BuildingSurface,18,18,18,18,18,18,18,18,18,18,18,18;
+Zone,TestZone,0,0,0,0,1,1,autocalculate,autocalculate;
+GlobalGeometryRules,UpperLeftCorner,CounterClockWise,World;
+
+BuildingSurface:Detailed,
+  Floor,
+  Floor,
+  FloorConstruction,
+  TestZone,
+  ,
+  Ground,
+  ,
+  NoSun,
+  NoWind,
+  autocalculate,
+  4,
+  0.000000,
+  0.000000,
+  0.000000,
+  0.000000,
+  12.000000,
+  0.000000,
+  18.000000,
+  12.000000,
+  0.000000,
+  18.000000,
+  0.000000,
+  0.000000;
+
+BuildingSurface:Detailed,
+  Roof,
+  Roof,
+  RoofConstruction,
+  TestZone,
+  ,
+  Outdoors,
+  ,
+  SunExposed,
+  WindExposed,
+  autocalculate,
+  4,
+  0.000000,
+  0.000000,
+  3.600000,
+  18.000000,
+  0.000000,
+  3.600000,
+  18.000000,
+  12.000000,
+  3.600000,
+  0.000000,
+  12.000000,
+  3.600000;
+
+BuildingSurface:Detailed,
+  South,
+  Wall,
+  WallConstruction,
+  TestZone,
+  ,
+  Outdoors,
+  ,
+  SunExposed,
+  WindExposed,
+  autocalculate,
+  4,
+  0.000000,
+  0.000000,
+  3.600000,
+  0.000000,
+  0.000000,
+  0.000000,
+  18.000000,
+  0.000000,
+  0.000000,
+  18.000000,
+  0.000000,
+  3.600000;
+
+BuildingSurface:Detailed,
+  North,
+  Wall,
+  WallConstruction,
+  TestZone,
+  ,
+  Outdoors,
+  ,
+  SunExposed,
+  WindExposed,
+  autocalculate,
+  4,
+  18.000000,
+  12.000000,
+  3.600000,
+  18.000000,
+  12.000000,
+  0.000000,
+  0.000000,
+  12.000000,
+  0.000000,
+  0.000000,
+  12.000000,
+  3.600000;
+
+BuildingSurface:Detailed,
+  East,
+  Wall,
+  WallConstruction,
+  TestZone,
+  ,
+  Outdoors,
+  ,
+  SunExposed,
+  WindExposed,
+  autocalculate,
+  4,
+  18.000000,
+  0.000000,
+  3.600000,
+  18.000000,
+  0.000000,
+  0.000000,
+  18.000000,
+  12.000000,
+  0.000000,
+  18.000000,
+  12.000000,
+  3.600000;
+
+BuildingSurface:Detailed,
+  West,
+  Wall,
+  WallConstruction,
+  TestZone,
+  ,
+  Outdoors,
+  ,
+  SunExposed,
+  WindExposed,
+  autocalculate,
+  4,
+  0.000000,
+  12.000000,
+  3.600000,
+  0.000000,
+  12.000000,
+  0.000000,
+  0.000000,
+  0.000000,
+  0.000000,
+  0.000000,
+  0.000000,
+  3.600000;
+Output:Variable,*,Zone Mean Air Temperature,Hourly;
