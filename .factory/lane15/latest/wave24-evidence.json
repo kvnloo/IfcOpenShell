@@ -1,0 +1,55 @@
+{
+  "wave": 24,
+  "scope": "EnergyPlus 26.2 synthetic one-zone design-day candidate, no EPW/HVAC",
+  "status": "LIMITED",
+  "tests": {
+    "core_total": 125,
+    "core_skipped": 1,
+    "core_failed": 0,
+    "baseline_passed": 19,
+    "focused_passed": 8
+  },
+  "native_energyplus_version": "NOT_INSTALLED",
+  "native_ifc": "NOT_RUN",
+  "native_openusd": "NOT_RUN",
+  "buildings": [
+    {
+      "fixture": "field_clinic",
+      "generated_idf_sha256": "dfe88a4d6f5c1b94e6a104bdb0acae48d079033394326d9f72b7454663177c11",
+      "status": "STATIC_ONLY",
+      "engine": "BLOCKED",
+      "strict_exit_code": 2,
+      "faces": 6,
+      "design_days": 2,
+      "energy_demand_kwh": null
+    },
+    {
+      "fixture": "small_residence",
+      "generated_idf_sha256": "37afbe63280830dfc640ff7b4ee5ac444c59f0fa9af81bf680ae3628b99b95c9",
+      "status": "STATIC_ONLY",
+      "engine": "BLOCKED",
+      "strict_exit_code": 2,
+      "faces": 6,
+      "design_days": 2,
+      "energy_demand_kwh": null
+    },
+    {
+      "fixture": "workshop",
+      "generated_idf_sha256": "7d4025320da7a8e8637baf94438d4f3a1e65b21e7d844efe0ccc57d06fbee7b9",
+      "status": "STATIC_ONLY",
+      "engine": "BLOCKED",
+      "strict_exit_code": 2,
+      "faces": 6,
+      "design_days": 2,
+      "energy_demand_kwh": null
+    }
+  ],
+  "references": {
+    "schema_example": "https://github.com/NatLabRockies/EnergyPlus/blob/v26.2.0/testfiles/1ZoneUncontrolled.idf",
+    "existing_fork_pr": "https://github.com/kvnloo/IfcOpenShell/pull/1",
+    "control_plane": "https://github.com/kvnloo/oss-factory/issues/104"
+  },
+  "worker_claim": "NONE",
+  "origin_publication": "NONE",
+  "attribution": "Generated with assistance of AI; EnergyPlus example authors credited; upstream IFC unit contributors credited in README_WAVE24.md"
+}
