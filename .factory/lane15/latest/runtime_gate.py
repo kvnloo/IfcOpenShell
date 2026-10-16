@@ -40,6 +40,16 @@ def native_openusd_probe(path: Path, building: Building) -> dict:
             raise AssertionError("OpenUSD units are not metres")
         if str(UsdGeom.GetStageUpAxis(stage)) != "Z":
             raise AssertionError("OpenUSD is not Z-up")
+        # Reject other authored scene objects, including non-Mesh geometries
+        # ignored by the six-name mesh loop. This is a thermal-shell stage,
+        # not a general USD scene graph or a full BIM visualization.
+        expected_paths = {"/Building": "Xform"}
+        expected_paths.update({f"/Building/{name}": "Mesh" for name in (
+            "Floor", "Roof", "South", "North", "East", "West"
+        )})
+        actual_paths = {str(prim.GetPath()): str(prim.GetTypeName()) for prim in stage.Traverse()}
+        if actual_paths != expected_paths:
+            raise AssertionError("Unexpected USD primitive(s) in native six-face stage")
         xforms = UsdGeom.XformCache()
         meshes = {}
         for name in ("Floor", "Roof", "South", "North", "East", "West"):

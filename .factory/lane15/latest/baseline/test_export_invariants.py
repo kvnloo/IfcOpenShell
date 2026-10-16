@@ -76,6 +76,20 @@ def parse_usda(path: Path) -> dict[str, Surface]:
     uncommented = re.sub(r"(?m)#.*$", "", data)
     if re.search(r"\bxformOp(?::|Order\b)", uncommented):
         raise AssertionError("Unsupported USD scene transform in static geometry preflight")
+    # This grammar certifies one Xform and exactly six surface meshes. USD can
+    # also contain typed prims (Cube, Sphere, etc.) and untyped overrides that
+    # a Mesh-only regex would silently drop from the cross-format audit.
+    declared = re.findall(
+        r'(?m)^\s*(def|over|class)\s+(?:([A-Za-z_][\w:]*)\s+)?"([^"\n]+)"\s*\{',
+        uncommented,
+    )
+    expected_prims = Counter([("def", "Xform", "Building")] + [
+        ("def", "Mesh", n) for n in ("Floor", "Roof", "South", "North", "East", "West")
+    ])
+    # No unparsed/unsupported prim declarations may disappear from this audit.
+    all_declarations = re.findall(r"\b(?:def|over|class)\b", uncommented)
+    if len(declared) != len(all_declarations) or Counter(declared) != expected_prims:
+        raise AssertionError("Unexpected USD primitive declaration in six-face shell")
     metadata = data.split("def Xform", 1)[0]
     axes = re.findall(r'^\s*upAxis\s*=\s*"([^"\n]+)"\s*$', metadata, re.MULTILINE)
     units = re.findall(r'^\s*metersPerUnit\s*=\s*([^\n#]+?)\s*$', metadata, re.MULTILINE)
