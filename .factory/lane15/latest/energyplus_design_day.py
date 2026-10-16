@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import shutil
@@ -67,12 +68,18 @@ def candidate(fragment: Path, metrics: Path) -> str:
     building = Building(*(float(xyz[k]) for k in ("length", "width", "height")))
     old_surfaces = parse_idf(fragment)  # rejects unaccounted openings, loads, etc.
     verified = verify_shell(old_surfaces, building)
-    if abs(verified["enclosed_volume_m3"] - expected["nominal_volume_m3"]) > 1e-6:
+    volume = expected["nominal_volume_m3"]
+    if not isinstance(volume, (int, float)) or not math.isfinite(volume) or abs(
+        verified["enclosed_volume_m3"] - volume
+    ) > 1e-6:
         raise ValueError("Geometry and reference volume disagree")
-    if any(abs(float(expected["face_areas_m2"][n]) -
-               measurements(building.length_m, building.width_m, building.height_m)["face_areas_m2"][n]) > 1e-6
-           for n in old_surfaces):
+    reported_faces = expected["face_areas_m2"]
+    if not isinstance(reported_faces, dict) or set(reported_faces) != set(old_surfaces):
         raise ValueError("Geometry and reference face-area ledger disagree")
+    ref_faces = measurements(building.length_m, building.width_m, building.height_m)["face_areas_m2"]
+    for name, area in reported_faces.items():
+        if not isinstance(area, (int, float)) or not math.isfinite(area) or abs(area - ref_faces[name]) > 1e-6:
+            raise ValueError("Geometry and reference face-area ledger disagree")
     if expected.get("energy_demand_kwh") is not None:
         raise ValueError("Source is no longer a geometry-only reference")
 
@@ -159,7 +166,7 @@ def run_engine(idf: Path, out: Path, executable: str = "energyplus") -> dict:
     except (OSError, subprocess.TimeoutExpired) as e:
         return {"status": "FAIL", "reason": f"Cannot inspect EnergyPlus version: {e}"}
     declared = (version.stdout + version.stderr).strip()
-    if version.returncode != 0 or not re.search(r"\b26\.2(?:\.0)?\b", declared):
+    if version.returncode != 0 or not re.fullmatch(r"EnergyPlus,\s*Version\s+26\.2(?:\.0)?(?:-[A-Za-z0-9]+)?", declared):
         return {"status": "BLOCKED", "reason": "Expected native EnergyPlus 26.2; refusing wrong IDD version",
                 "reported_engine_version": declared[-250:]}
     out.mkdir(parents=True, exist_ok=True)
