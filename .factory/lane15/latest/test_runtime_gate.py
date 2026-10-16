@@ -153,6 +153,7 @@ class RuntimeGateTests(unittest.TestCase):
                    "East": [1.0, 0.0, 0.0], "West": [-1.0, 0.0, 0.0]}
         return {
             "status": "ifc_authoring_verified", "length_unit": length_unit,
+            "ifcopenshell_version": "0.9.0",
             "runtime_checks": {
                 "ifc_roundtrip": "PASS", "schema_validation": "PASS", "geometry_kernel": "PASS",
                 "energy_space_boundaries": "GEOMETRY_READY_ONLY"
@@ -190,6 +191,21 @@ class RuntimeGateTests(unittest.TestCase):
         self.assertEqual(packet["ifc_authoring"]["status"], "PASS")
         self.assertEqual(packet["ifc_energy_boundary_handoff"]["status"], "GEOMETRY_READY_ONLY")
         self.assertFalse(packet["civilization"]["verified_construction_capability"])
+
+    def test_wrong_or_unreported_ifcopenshell_version_never_passes_receipt(self):
+        from copy import deepcopy
+        good = self._synthetic_ifc_receipt()
+        for version in (None, "0.8.5", "0.9.1", "0.9.0-rc1", "0.9.0-other"):
+            with self.subTest(version=version):
+                receipt = deepcopy(good)
+                if version is None:
+                    del receipt["ifcopenshell_version"]
+                else:
+                    receipt["ifcopenshell_version"] = version
+                with patch("runtime_gate.run_ifc", return_value=receipt):
+                    packet = check_case(self.folder, allow_ifc_author=True)
+                self.assertEqual(packet["ifc_authoring"]["status"], "NOT_RUN")
+                self.assertFalse(packet["civilization"]["verified_construction_capability"])
 
     def test_missing_native_proofs_never_pass_authoring(self):
         complete = self._synthetic_ifc_receipt()

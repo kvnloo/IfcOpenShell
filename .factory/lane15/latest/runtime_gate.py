@@ -79,6 +79,8 @@ def validated_ifc_receipt(result: dict, ifc_path: Path, d: Dimensions, length_un
         return False
     if result.get("status") != "ifc_authoring_verified" or result.get("length_unit") != length_unit:
         return False
+    if result.get("ifcopenshell_version") != "0.9.0":
+        return False
     if any(checks.get(k) != "PASS" for k in ("ifc_roundtrip", "schema_validation", "geometry_kernel")):
         return False
     if verified.get("schema") != "IFC4" or verified.get("kernel_bodies_checked") != 6:
