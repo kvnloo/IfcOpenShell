@@ -253,6 +253,11 @@ def run(output: Path, d: Dimensions, *, length_unit: str = "m"):
     except ImportError:
         report["blocker"] = "ifcopenshell Python package not installed; no .ifc file produced"
     else:
+        detected = getattr(ifcopenshell, "version", None)
+        if detected != "0.9.0":
+            report["blocker"] = f"Expected IfcOpenShell 0.9.0; found {detected!r}"
+            (output / "ifc_report.json").write_text(json.dumps(report, indent=2) + "\n")
+            return report
         path = author(output / "single_zone.ifc", d, length_unit=length_unit)
         details = verify_ifc(path, d, length_unit=length_unit)
         from energy_handoff_gate import audit_model
