@@ -163,6 +163,7 @@ def verify_boundary_geometry(model, d, scale):
         stats[name] = {"area_m2": a * b, "normal": list(generated["axis"])}
     return {"status": "GEOMETRY_READY_ONLY", "checked_surfaces": 6,
             "area_m2": {name: entry["area_m2"] for name, entry in stats.items()},
+            "normal": {name: entry["normal"] for name, entry in stats.items()},
             "thermal_volume_m3": d.length * d.width * d.height,
             "scope": "IFC space-boundary planar coordinates versus synthetic USDA/IDF shell",
             "energy_simulation_verified": False}
