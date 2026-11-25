@@ -1,0 +1,118 @@
+# Fork-only CI: not part of the upstream change.
+# This file was generated with the assistance of an AI coding tool.
+# Builds IfcOpenShell at two exact commits and runs the open profile sweep
+# tests: "red" = tests only on the base, "green" = tests + fix.
+name: Fork open profile sweeps RED/GREEN
+
+permissions: {}
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  redgreen:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: red
+            sha: b80031f4d8ca5704a578fc80d08639085bb1141d
+          - lane: green
+            sha: d15fcd75ba7df8eed6d0796166f25ae62f7ec7d7
+    name: ${{ matrix.lane }} (${{ matrix.sha }})
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.sha }}
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Record tree
+        run: |
+          git log -1 --format='%H %s'
+          grep -n 'convert_sweep_basis' src/ifcgeom/kernels/opencascade/opencascade_kernel.cpp || echo "no fix in tree"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install xmlschema xsdata numpy lxml pytest isodate lark networkx tabulate python-dateutil shapely pyparsing psutil
+
+      - name: Install C++ dependencies
+        run: |
+          sudo apt update
+          OCCT_CMAKE_DEPS="occt-misc libocct-draw-dev tcl-dev tk-dev libxi-dev"
+          sudo apt-get install --no-install-recommends -y \
+          git cmake ninja-build gcc g++ \
+          libboost-iostreams-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libpcre3-dev libxml2-dev \
+          libtbb-dev nlohmann-json3-dev \
+          libocct-foundation-dev libocct-modeling-algorithms-dev libocct-modeling-data-dev libocct-ocaf-dev libocct-visualization-dev libocct-data-exchange-dev \
+          ${OCCT_CMAKE_DEPS} \
+          libsqlite3-dev sqlite3 \
+          libcgal-dev libeigen3-dev
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: fork-open-profile-redgreen-${{ matrix.lane }}
+
+      - name: Build swig
+        run: |
+          sudo apt remove --purge -y swig swig4.0 || true
+          sudo apt-get install -y libpcre2-dev bison
+          git clone https://github.com/swig/swig --branch v4.2.1 --depth 1
+          cd swig && mkdir build && cd build
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+          sudo cmake --build . --target install -j $(nproc)
+
+      - name: Build ifcopenshell
+        run: |
+          mkdir build && cd build
+          cmake ../cmake \
+               -G Ninja \
+               -DCMAKE_BUILD_TYPE=Release \
+               -DPYTHON_EXECUTABLE:FILEPATH=$(which python) \
+               -DPYTHON_INCLUDE_DIR:PATH=$(python -c "import sysconfig; print(sysconfig.get_path('include'))") \
+               -DUSE_MMAP=On \
+               -DUSE_CCACHE=ON \
+               -DBUILD_ONLY_COMMON_SCHEMAS=ON \
+               -DCOLLADA_SUPPORT=Off \
+               -DBUILD_EXAMPLES=Off \
+               -DBUILD_CONVERT=Off \
+               -DBUILD_GEOMSERVER=Off
+          sudo cmake --build . --target install -j $(nproc)
+
+      - name: Run open profile sweep tests
+        run: |
+          cd src/ifcopenshell-python/test
+          python -c "import ifcopenshell; print(ifcopenshell.__file__, ifcopenshell.version)"
+          set +e
+          timeout 600 pytest --import-mode=importlib -p no:pytest-blender -v geom/test_open_profile_sweeps.py 2>&1 | tee pytest.log
+          status=${PIPESTATUS[0]}
+          echo "PYTEST_EXIT=$status"
+          echo "### ${{ matrix.lane }} ${{ matrix.sha }} pytest exit $status" >> "$GITHUB_STEP_SUMMARY"
+          grep -E 'PASSED|FAILED|passed|failed' pytest.log | tail -20 >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ matrix.lane }}" = red ]; then
+            # Expect both new tests to fail on the base.
+            grep -q 'test_surface_of_revolution_of_open_profile_is_a_sheet FAILED' pytest.log || exit 1
+            grep -q 'test_open_profile_of_an_arc_is_an_open_loop FAILED' pytest.log || exit 1
+            grep -q ' 2 failed' pytest.log || exit 1
+            echo "RED as expected"
+          else
+            exit $status
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pytest-${{ matrix.lane }}
+          path: src/ifcopenshell-python/test/pytest.log
