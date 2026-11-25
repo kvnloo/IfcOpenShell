@@ -1,0 +1,87 @@
+# Fork-only CI: not part of the upstream change.
+# This file was generated with the assistance of an AI coding tool.
+# 1. Builds IfcParse with the C++ parse tests on ubuntu-22.04 (GCC 11) and runs them.
+# 2. Compares format_double_shortest at the base and at the change on Linux,
+#    Windows (MSVC) and macOS, over powers of two and random doubles.
+name: Fork shortest REAL formatting checks
+
+permissions: {}
+
+on:
+  push:
+    branches: [ci-fork-real-shortest-to-chars]
+  workflow_dispatch:
+
+env:
+  BASE: 112de6e9413cf659e3d627abf3c8e5cdbe1d7840
+  CHANGE: ebfd62817789a1eed5c845300ac60761d53f3e23
+
+jobs:
+  parse-tests:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHANGE }}
+          persist-credentials: false
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y cmake ninja-build gcc g++ \
+            libboost-iostreams-dev libboost-program-options-dev libboost-regex-dev libboost-system-dev \
+            libpcre3-dev libxml2-dev nlohmann-json3-dev libsqlite3-dev
+          g++ --version | head -1
+      - name: Build IfcParse and its tests
+        run: |
+          git log -1 --format='%H %s'
+          mkdir build && cd build
+          cmake ../cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_IFCGEOM=OFF -DBUILD_IFCPYTHON=OFF -DBUILD_CONVERT=OFF -DBUILD_GEOMSERVER=OFF \
+            -DBUILD_EXAMPLES=OFF -DCOLLADA_SUPPORT=OFF -DWITH_OPENCASCADE=OFF -DWITH_CGAL=OFF \
+            -DIFCXML_SUPPORT=OFF -DHDF5_SUPPORT=OFF -DWITH_ROCKSDB=OFF -DSCHEMA_VERSIONS=4 \
+            -DBUILD_IFCOPENSHELL_PARSE_TESTS=ON
+          cmake --build . --target test_ifcopenshell_parse -j $(nproc)
+      - name: Run the parse tests
+        run: |
+          cd build
+          ctest --output-on-failure -j $(nproc)
+
+  format-slice:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Extract both versions of format_double_shortest
+        shell: bash
+        run: |
+          git fetch --depth=1 origin $BASE
+          git show $BASE:src/ifcparse/parse.cpp > base_parse.cpp
+          git show $CHANGE:src/ifcparse/parse.cpp > new_parse.cpp
+          python ci-fork/slice_extract.py base_parse.cpp fmt_base > ci-fork/fmt_base.h
+          python ci-fork/slice_extract.py new_parse.cpp fmt_new > ci-fork/fmt_new.h
+          diff ci-fork/fmt_base.h ci-fork/fmt_new.h || true
+      - name: Build and run (GCC / Apple clang)
+        if: runner.os != 'Windows'
+        run: |
+          c++ --version | head -1
+          c++ -std=c++17 -O2 ci-fork/slice_check.cpp -o slice_check
+          ./slice_check
+      - name: Build and run (MSVC)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          cl /nologo /std:c++17 /O2 /EHsc /D_CRT_SECURE_NO_WARNINGS ci-fork\slice_check.cpp /Fe:slice_check.exe
+          slice_check.exe
