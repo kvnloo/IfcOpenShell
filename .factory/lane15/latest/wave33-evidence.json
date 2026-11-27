@@ -1,0 +1,62 @@
+{
+  "wave": 33,
+  "classification": "LIMITED_LOCAL_ONLY",
+  "fork_pr": "https://github.com/kvnloo/IfcOpenShell/pull/1",
+  "branch": "chatgpt/lane15-recovered-waves-01-22",
+  "observed_remote_head": "85cc9c9c85141191967c5f0aee1b03b9af017e93",
+  "wave30_original_energyplus_source_blob": "2060bb204a1564ea1aaf6f02aac9338e987b47fa",
+  "integrated_W31_W32_energyplus_source_sha256": "a4932854f336ecbcad8a90836819215bac84477c5c28ff1c40528e0dae990e92",
+  "integration": {
+    "wave31": "applied cleanly",
+    "wave32": "applied cleanly after wave31",
+    "python_compile": "PASS"
+  },
+  "new_run_tests": {
+    "combined_version_and_ledger": {
+      "methods": 5,
+      "after_passed": 5,
+      "before_failed_assertions": 6,
+      "before_errors": 1,
+      "reconstructed_fixture": true,
+      "baseline_shims": "TEST_ONLY_NOT_IN_PATCH",
+      "scope": "controlled IDF reconstruction and fake EnergyPlus subprocess; not native"
+    }
+  },
+  "historical_tests_NOT_rerun": {
+    "wave32_suite": {
+      "run": 128,
+      "passed": 127,
+      "skipped": 1
+    },
+    "baseline": 19
+  },
+  "native": {
+    "ifcopenshell_0.9.0": "NOT_RUN",
+    "openusd_26.5": "NOT_RUN",
+    "bonsai": "NOT_RUN",
+    "energyplus_26.2": "NOT_RUN"
+  },
+  "published": false,
+  "native_energy_kwh": null,
+  "global_lease_claimed": false,
+  "origin_writes": false,
+  "wheel_access": "BLOCKED_NETWORK",
+  "wheel_sha256_source": "PyPI release metadata; not verified from downloaded bytes",
+  "attribution": [
+    "aothms",
+    "BIMvoice",
+    "original IFC issue reporters",
+    "NatLabRockies/EnergyPlus",
+    "OpenUSD developers",
+    "AI-assisted prototype"
+  ],
+  "environment": {
+    "python": "3.13.5",
+    "os": "Linux",
+    "arch": "x86_64",
+    "ifcopenshell_installed": false,
+    "openusd_pxr_installed": false,
+    "energyplus_executable": null,
+    "IfcConvert_executable": null
+  }
+}

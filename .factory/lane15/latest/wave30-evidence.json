@@ -1,0 +1,52 @@
+{
+  "kind": "result",
+  "wave": 30,
+  "status": "LIMITED",
+  "scope": "downstream-only",
+  "head_before": "c9b3be6990fb631c35092956642b3da1598a467e",
+  "behavior_evidence": "Unaccounted USD Cube, Xform and over prims were silently accepted; 3 negative tests failed before the fix.",
+  "requirement_evidence": "Reference one-zone cross-format contract consists of one Building Xform and exactly six thermal Mesh prims.",
+  "impact_scope": "USD source inventory must match six-face EnergyPlus handoff; native probe must reject extra prims.",
+  "semantic_risk": "Rejects richer USD scenes intentionally; use a separate contract for full BIM.",
+  "tests": {
+    "red": {
+      "run": 5,
+      "failed": 3,
+      "skipped": 1
+    },
+    "focused_green": {
+      "run": 5,
+      "passed": 4,
+      "skipped": 1
+    },
+    "reconstructed_core": {
+      "run": 122,
+      "passed": 120,
+      "skipped": 2
+    },
+    "baseline": {
+      "run": 19,
+      "passed": 19
+    }
+  },
+  "native": {
+    "ifcopenshell": "NOT_RUN",
+    "openusd": "NOT_RUN",
+    "bonsai": "NOT_RUN",
+    "energyplus": "NOT_RUN"
+  },
+  "energy_demand_kwh": null,
+  "license_scope": "AI-assisted local interoperability prototype; any eventual library contribution must be LGPL-3.0-or-later compatible",
+  "contributors_credited": [
+    "IfcOpenShell/Bonsai maintainers",
+    "OpenUSD maintainers",
+    "NatLabRockies/EnergyPlus",
+    "aothms #9951",
+    "BIMvoice #9295",
+    "original issue reporters"
+  ],
+  "worker_claim_acquired": false,
+  "origin_write": false,
+  "default_branch_merge": false,
+  "next": "Run authentic IfcOpenShell 0.9.0 saved IFC4 metre/mm, OpenUSD 26.5 stage traversal, and EnergyPlus 26.2 design-day with fresh error/end logs on approved native runner."
+}

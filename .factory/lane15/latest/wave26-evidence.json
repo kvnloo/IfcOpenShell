@@ -1,0 +1,18 @@
+{
+  "wave": 26,
+  "status": "LIMITED",
+  "proof": "Stale clean eplusout.err plus a silent process exit=0 previously produced false PASS. New isolated run directory returns FAIL and preserves prior log.",
+  "tests": {
+    "passed": 127,
+    "skipped": 1,
+    "failed": 0,
+    "focused_passed": 3
+  },
+  "native_runtimes": "NOT_RUN",
+  "static_surfaces": 6,
+  "design_days": 2,
+  "energy_demand_kwh": null,
+  "origin_writes": 0,
+  "worker_claims": 0,
+  "next": "Execute native IFC4 m/mm and EnergyPlus 26.2 on approved runner."
+}

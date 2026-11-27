@@ -1,0 +1,17 @@
+{
+  "status": "STATIC_ONLY",
+  "energyplus_schema": "26.2",
+  "surfaces": 6,
+  "materials": 3,
+  "constructions": 3,
+  "sizing_days": 2,
+  "native_engine": "NOT_RUN",
+  "weather_file": "NOT_PROVIDED",
+  "energy_demand_kwh": null,
+  "sha256_idf": "7d4025320da7a8e8637baf94438d4f3a1e65b21e7d844efe0ccc57d06fbee7b9",
+  "source_fixture": "workshop",
+  "native": {
+    "status": "BLOCKED",
+    "reason": "EnergyPlus executable unavailable: energyplus"
+  }
+}

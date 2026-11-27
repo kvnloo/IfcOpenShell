@@ -1,0 +1,17 @@
+{
+  "wave": 31,
+  "status": "LIMITED",
+  "workstream": "kvnloo/IfcOpenShell PR #1",
+  "target_branch": "chatgpt/lane15-recovered-waves-01-22",
+  "base_head": "85cc9c9c85141191967c5f0aee1b03b9af017e93",
+  "defect": "EnergyPlus executable version is only substring-matched; a wrong engine can pass if its banner mentions schema 26.2 elsewhere",
+  "pre_fix": {"negative_wrong_version_cases_failing": 3, "incorrect_status": "PASS"},
+  "post_fix": {"negative_wrong_version_cases_blocked": 3, "official_version_banner_stub_only": "PASS"},
+  "tests": {"wave22_derived_unittest_methods": 119, "passed": 118, "skipped": 1, "supplemental_waves_23_through_30": "NOT_RUN"},
+  "native_runtimes": {"ifcopenshell": "NOT_RUN", "openusd": "NOT_RUN", "bonsai": "NOT_RUN", "energyplus": "NOT_RUN"},
+  "energy_demand_kwh": null,
+  "origin_writes": false,
+  "push_status": "BLOCKED_BY_CONNECTOR_SAFETY_CHECK",
+  "prepared_git_tree_sha": "260de228cdddfbffa843f5c4106914406fcddd20",
+  "sources": ["https://energyplus.readthedocs.io/en/v26.2.0/essentials/essentials.html"]
+}

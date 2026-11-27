@@ -1,0 +1,19 @@
+{
+  "units": "m",
+  "face_areas_m2": {
+    "Floor": 48.0,
+    "Roof": 48.0,
+    "South": 16.200000000000003,
+    "North": 16.200000000000003,
+    "East": 21.6,
+    "West": 21.6
+  },
+  "envelope_area_m2": 171.60000000000002,
+  "nominal_volume_m3": 129.60000000000002,
+  "energy_demand_kwh": null,
+  "dimensions_m": {
+    "length": 6.0,
+    "width": 8.0,
+    "height": 2.7
+  }
+}

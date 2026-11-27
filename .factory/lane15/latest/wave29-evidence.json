@@ -1,0 +1,63 @@
+{
+  "schema": "lane15-wave29-v1",
+  "source": "recovered-wave22-baseline-with-current-fork-boundary-and-consumer-contract",
+  "status": "LIMITED",
+  "checked_at_date": "2026-10-16",
+  "issue": "producer omits normal map required by validated_boundary_receipt",
+  "fix": "return the six already-computed normal vectors in boundary geometry receipt",
+  "project": "kvnloo/IfcOpenShell",
+  "branch": "chatgpt/lane15-recovered-waves-01-22",
+  "tests": {
+    "before": {
+      "command": "PYTHONPATH=baseline:. python -m unittest test_boundary_handoff_integration -v",
+      "exit": 1,
+      "positive_dimension_failures": 3,
+      "missing_key_errors": 1
+    },
+    "after": {
+      "command": "PYTHONPATH=baseline:. python -m unittest test_boundary_handoff_integration -v",
+      "exit": 0,
+      "tests": 2
+    },
+    "recovered_core": {
+      "command": "PYTHONPATH=baseline:. python -m unittest discover -s . -p 'test_*.py' -q",
+      "run": 119,
+      "passed": 118,
+      "skipped": 1,
+      "failed": 0
+    },
+    "baseline": {
+      "command": "PYTHONPATH=baseline:. python -m unittest discover -s baseline -p 'test_*.py' -q",
+      "run": 19,
+      "passed": 19,
+      "failed": 0
+    },
+    "native_gate": {
+      "exit": 2,
+      "status": "BLOCKED",
+      "fixtures": [
+        "small_residence",
+        "field_clinic",
+        "workshop"
+      ]
+    }
+  },
+  "runtime": {
+    "python": "3.13.5",
+    "ifcopenshell": "NOT_INSTALLED",
+    "openusd": "NOT_INSTALLED",
+    "energyplus": "NOT_INSTALLED",
+    "bonsai": "NOT_INSTALLED"
+  },
+  "energy_demand_kwh": null,
+  "independent_native_proof": false,
+  "credit": [
+    "IfcOpenShell/Bonsai maintainers",
+    "aothms (#9951)",
+    "BIMvoice (#9295)",
+    "original issue reporters",
+    "NatLabRockies/EnergyPlus contributors"
+  ],
+  "authorization": "fork-only; no worker lease; no upstream write or default merge",
+  "ai_assisted": true
+}

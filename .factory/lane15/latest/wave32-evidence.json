@@ -1,0 +1,39 @@
+{
+  "wave": 32,
+  "status": "LIMITED_LOCAL_ONLY",
+  "repository": "kvnloo/IfcOpenShell",
+  "branch": "chatgpt/lane15-recovered-waves-01-22",
+  "observed_head": "85cc9c9c85141191967c5f0aee1b03b9af017e93",
+  "defect": "design-day handoff accepts extra-face metrics and NaN area or volume without rejecting; missing-face raises KeyError",
+  "requirement": "source-to-consumer one-to-one accounting of the six reference faces and finite geometry metrics",
+  "pre_fix": {
+    "negative_subtests_failed": 3,
+    "negative_subtests_errored": 1
+  },
+  "post_fix": {
+    "focused_methods_passed": 3,
+    "reconstructed_local_methods": 128,
+    "passed": 127,
+    "skipped": 1,
+    "baseline_passed": 19
+  },
+  "native": {
+    "ifcopenshell": "NOT_RUN",
+    "openusd": "NOT_RUN",
+    "bonsai": "NOT_RUN",
+    "energyplus": "NOT_RUN"
+  },
+  "older_code_fixture": "Wave24 energyplus_design_day.py; candidate() preexisting block matched current remote Wave30; later runner updates not run",
+  "energy_demand_kwh": null,
+  "worker_claim": false,
+  "origin_write": false,
+  "publish_status": "NOT_ATTEMPTED_AFTER_OPENAI_SAFETY_BLOCK_ON_WAVE31",
+  "preexisting_wave31_patch": "lane15_wave31.patch",
+  "attribution": [
+    "EnergyPlus developers",
+    "IfcOpenShell unit issue reporters",
+    "aothms",
+    "BIMvoice",
+    "AI-assisted synthetic local prototype"
+  ]
+}

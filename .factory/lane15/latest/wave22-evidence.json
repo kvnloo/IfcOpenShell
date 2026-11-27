@@ -1,0 +1,61 @@
+{
+  "schema": "lane15-wave22-evidence-v1",
+  "date": "2026-10-15",
+  "target": "IFC4 saved metre/mm geometry and thermal boundary runtime verification",
+  "classification": "LOCAL_ONLY/LIMITED",
+  "existing_work_order": "https://github.com/kvnloo/oss-factory/issues/104",
+  "registry_status": "ifcopenshell registration pending draft https://github.com/kvnloo/oss-factory/pull/100",
+  "remote_writes": 0,
+  "origin_writes": 0,
+  "worker_claims_created": 0,
+  "before": {
+    "cli_code": 0,
+    "invocation": "--author-ifc --ifc-units both without --require-native-ifc",
+    "ifc_authoring": "NOT_RUN",
+    "ifc_parity": "NOT_RUN"
+  },
+  "after": {
+    "cli_code": 2,
+    "invocation": "--author-ifc --ifc-units both --require-native-ifc",
+    "requirement": {
+      "status": "BLOCKED",
+      "failing_cases": [
+        "small_residence",
+        "field_clinic",
+        "workshop"
+      ],
+      "scope": "Fresh IFC4 m/mm saved roundtrip, kernel geometry and thermal boundaries only",
+      "not_verified": [
+        "Bonsai",
+        "OpenUSD",
+        "EnergyPlus",
+        "energy_demand_kwh"
+      ]
+    },
+    "static_preflight_cli_code": 0
+  },
+  "test_results": {
+    "new_regression_tests_passed": 5,
+    "core_tests_run": 117,
+    "core_tests_skipped": 1,
+    "independent_baseline_tests_passed": 19,
+    "clean_apply_core_tests_run": 117,
+    "clean_apply_baseline_tests_passed": 19
+  },
+  "runtime": {
+    "ifcopenshell": "NOT_INSTALLED",
+    "pxr": "NOT_INSTALLED",
+    "energyplus": "NOT_INSTALLED",
+    "bonsai": "NOT_RUN"
+  },
+  "physical_impact": {
+    "energy_demand_kwh": null,
+    "energy_savings": null,
+    "emissions_kg": null
+  },
+  "origin_dedupe": {
+    "9295": "open; BIMvoice",
+    "9951": "merged 2026-10-15; aothms"
+  },
+  "next_action": "Manual, authorized, pinned Python 3.11 native CI using unpublished template; validate actual IFC m/mm, then USDA parser; no EnergyPlus claim."
+}

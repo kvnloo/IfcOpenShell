@@ -1,0 +1,34 @@
+{
+  "status": "blocked",
+  "reference": {
+    "zone_floor_area_m2": 600.0,
+    "zone_shell_area_m2": 1900.0,
+    "zone_volume_m3": 4200.0,
+    "physical_bbox_m": [
+      [
+        -0.2,
+        -0.2,
+        -0.2
+      ],
+      [
+        30.2,
+        20.2,
+        7.2
+      ]
+    ],
+    "physical_solid_count": 6,
+    "energy_demand_kwh": null
+  },
+  "tool": "IfcOpenShell authoring/runtime gate",
+  "length_unit": "mm",
+  "runtime_checks": {
+    "ifc_roundtrip": "NOT_RUN",
+    "schema_validation": "NOT_RUN",
+    "geometry_kernel": "NOT_RUN",
+    "bonsai": "NOT_RUN",
+    "openusd": "NOT_RUN",
+    "energyplus": "NOT_RUN",
+    "energy_space_boundaries": "NOT_RUN"
+  },
+  "blocker": "ifcopenshell Python package not installed; no .ifc file produced"
+}
